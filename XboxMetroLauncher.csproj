@@ -20,16 +20,12 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);Build\**;bin\**;obj\**</DefaultItemExcludes>
     <ApplicationIcon>Assets\Misc\256x256.ico</ApplicationIcon>
     <RootNamespace />
-    <Version>1.2.0</Version>
-    <InformationalVersion>v1.2.0-public</InformationalVersion>
-    <AssemblyVersion>1.2.0.0</AssemblyVersion>
-    <FileVersion>1.2.0.0</FileVersion>
+    <Version>1.2.1</Version>
+    <InformationalVersion>v1.2.1-public</InformationalVersion>
+    <AssemblyVersion>1.2.1.0</AssemblyVersion>
+    <FileVersion>1.2.1.0</FileVersion>
     <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ApplicationDefinition Include="XboxMetroLauncher\App.xaml" />
-  </ItemGroup>
 
   <ItemGroup>
     <Using Include="System" />
@@ -48,9 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="SharpDX.DirectInput" Version="4.2.0" />
   </ItemGroup>
 
