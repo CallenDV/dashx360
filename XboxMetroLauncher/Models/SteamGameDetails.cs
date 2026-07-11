@@ -1,13 +1,25 @@
+using System;
+using System.Collections.Generic;
+
 namespace XboxMetroLauncher.Models;
 
 public sealed class SteamGameDetails
 {
-    public TimeSpan? Playtime { get; init; }
-    public string Genre { get; init; } = string.Empty;
-    public string Rating { get; init; } = string.Empty;
-    public string MultiplayerInfo { get; init; } = string.Empty;
-    public string CoOpInfo { get; init; } = string.Empty;
-    public string StoreScreenshotPath { get; init; } = string.Empty;
-    public double ReviewStarRating { get; init; }
-    public int ReviewCount { get; init; }
+	public TimeSpan? Playtime { get; set; }
+
+	public string Genre { get; set; } = string.Empty;
+
+	public string Rating { get; set; } = string.Empty;
+
+	public string MultiplayerInfo { get; set; } = string.Empty;
+
+	public string CoOpInfo { get; set; } = string.Empty;
+
+	public string StoreScreenshotPath { get; set; } = string.Empty;
+
+	public double ReviewStarRating { get; set; }
+
+	public int ReviewCount { get; set; }
+
+	public IReadOnlyList<SteamGameDlc> Dlc { get; set; } = Array.Empty<SteamGameDlc>();
 }

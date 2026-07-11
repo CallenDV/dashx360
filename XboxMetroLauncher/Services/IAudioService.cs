@@ -1,7 +1,12 @@
+using System.Collections.Generic;
+
 namespace XboxMetroLauncher.Services;
 
 public interface IAudioService
 {
-    void Play(string soundName);
-    void Stop(string soundName);
+	IReadOnlyList<string> GetOutputDeviceNames();
+
+	void Play(string soundName);
+
+	void Stop(string soundName);
 }

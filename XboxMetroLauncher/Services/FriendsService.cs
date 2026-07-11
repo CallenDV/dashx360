@@ -1,26 +1,31 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using XboxMetroLauncher.Models;
 
 namespace XboxMetroLauncher.Services;
 
 public sealed class FriendsService : IFriendsService
 {
-    private const string FriendsFileName = "friends.json";
-    private readonly IJsonStore _jsonStore;
+	private const string FriendsFileName = "friends.json";
 
-    public FriendsService(IJsonStore jsonStore)
-    {
-        _jsonStore = jsonStore;
-    }
+	private readonly IJsonStore _jsonStore;
 
-    public async Task<IReadOnlyList<FriendProfile>> LoadAsync()
-    {
-        var data = await _jsonStore.ReadAsync<FriendsData>(FriendsFileName).ConfigureAwait(false);
-        return data?.Friends ?? [];
-    }
+	public FriendsService(IJsonStore jsonStore)
+	{
+		_jsonStore = jsonStore;
+	}
 
-    public Task SaveAsync(IReadOnlyList<FriendProfile> friends)
-        => _jsonStore.WriteAsync(FriendsFileName, new FriendsData
-        {
-            Friends = friends.ToList()
-        });
+	public async Task<IReadOnlyList<FriendProfile>> LoadAsync()
+	{
+		return (await _jsonStore.ReadAsync<FriendsData>("friends.json").ConfigureAwait(continueOnCapturedContext: false))?.Friends ?? new List<FriendProfile>();
+	}
+
+	public Task SaveAsync(IReadOnlyList<FriendProfile> friends)
+	{
+		return _jsonStore.WriteAsync("friends.json", new FriendsData
+		{
+			Friends = friends.ToList()
+		});
+	}
 }

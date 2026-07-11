@@ -8,6 +8,9 @@
     <ImplicitUsings>false</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishSingleFile>false</PublishSingleFile>
     <SelfContained>false</SelfContained>
@@ -20,15 +23,25 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);Build\**;bin\**;obj\**</DefaultItemExcludes>
     <ApplicationIcon>Assets\Misc\256x256.ico</ApplicationIcon>
     <RootNamespace />
-    <Version>1.2.0</Version>
-    <InformationalVersion>v1.2.0-public</InformationalVersion>
-    <AssemblyVersion>1.2.0.0</AssemblyVersion>
-    <FileVersion>1.2.0.0</FileVersion>
+    <Version>1.2.1</Version>
+    <InformationalVersion>v1.2.1-public</InformationalVersion>
+    <AssemblyVersion>1.2.1.0</AssemblyVersion>
+    <FileVersion>1.2.1.0</FileVersion>
     <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="XboxMetroLauncher\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ApplicationDefinition Include="XboxMetroLauncher\App.xaml" />
+    <Page Include="XboxMetroLauncher\MainWindow.xaml" />
+    <Page Include="XboxMetroLauncher\Controls\*.xaml" />
+    <Page Include="XboxMetroLauncher\Themes\*.xaml" />
+    <Page Include="XboxMetroLauncher\Views\*.xaml" />
+    <Page Include="XboxMetroLauncher\Views\Tabs\*.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,6 +64,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="SharpDX.DirectInput" Version="4.2.0" />
   </ItemGroup>
 

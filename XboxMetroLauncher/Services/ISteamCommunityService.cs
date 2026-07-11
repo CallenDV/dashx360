@@ -1,28 +1,25 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using XboxMetroLauncher.Models;
 
 namespace XboxMetroLauncher.Services;
 
 public interface ISteamCommunityService
 {
-    Task<SteamCommunityConfig> LoadConfigAsync(CancellationToken cancellationToken = default);
+	string LastStatusMessage { get; }
 
-    Task SaveConfigAsync(SteamCommunityConfig config, CancellationToken cancellationToken = default);
+	bool IsConfigured { get; }
 
-    Task<SteamConnectionTestResult> TestConnectionAsync(
-        SteamCommunityConfig config,
-        CancellationToken cancellationToken = default);
+	Task<SteamCommunityConfig> LoadConfigAsync(CancellationToken cancellationToken = default(CancellationToken));
 
-    Task<IReadOnlyList<SocialFriend>> LoadFriendsAsync(CancellationToken cancellationToken = default);
+	Task SaveConfigAsync(SteamCommunityConfig config, CancellationToken cancellationToken = default(CancellationToken));
 
-    Task<IReadOnlyList<SteamAchievementItem>> LoadAchievementsAsync(
-        string appId,
-        CancellationToken cancellationToken = default);
+	Task<SteamConnectionTestResult> TestConnectionAsync(SteamCommunityConfig config, CancellationToken cancellationToken = default(CancellationToken));
 
-    Task<SteamGameDetails> LoadGameDetailsAsync(
-        string appId,
-        CancellationToken cancellationToken = default);
+	Task<IReadOnlyList<SocialFriend>> LoadFriendsAsync(CancellationToken cancellationToken = default(CancellationToken));
 
-    string LastStatusMessage { get; }
+	Task<IReadOnlyList<SteamAchievementItem>> LoadAchievementsAsync(string appId, CancellationToken cancellationToken = default(CancellationToken));
 
-    bool IsConfigured { get; }
+	Task<SteamGameDetails> LoadGameDetailsAsync(string appId, CancellationToken cancellationToken = default(CancellationToken));
 }
