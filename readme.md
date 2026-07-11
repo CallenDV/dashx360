@@ -7,13 +7,6 @@ If you like my work, feel free to donate to my ko-fi! however money will never b
 Original app credit: ZivvoZ
 https://youtube.com/@zivvoz
 
-## Version 1.2.1
-
-- Custom dashboard tile colors now also drive the dashboard accent boxes in Guide menus, selection bars, and settings buttons.
-- Fixed Guide/Friends icon glyph rendering so people, messages, controller, voice, and reputation icons display correctly instead of fallback boxes.
-- Fixed startup behavior for recovered public builds so the main window opens reliably.
-- Disabled the unsafe DirectInput fallback path that could crash the app on some systems; XInput controller support remains active.
-
 ## Features
 
 - Xbox 360-inspired dashboard tabs for games, apps, music, video, social, Bing, and settings
