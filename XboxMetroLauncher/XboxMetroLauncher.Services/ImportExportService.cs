@@ -58,9 +58,29 @@ public sealed class ImportExportService : IImportExportService
 	public async Task<DashboardImportResult> ImportAsync(string filePath, CancellationToken cancellationToken = default(CancellationToken))
 	{
 		_ = 10;
+		ImportedDashboardData importedData;
 		try
 		{
-			ImportedDashboardData importedData = await ReadAndValidateBackupAsync(filePath, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+			importedData = await ReadAndValidateBackupAsync(filePath, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+		}
+		catch (JsonException)
+		{
+			return new DashboardImportResult
+			{
+				Success = false,
+				Message = "The selected backup file is not valid JSON."
+			};
+		}
+		catch (InvalidDataException ex)
+		{
+			return new DashboardImportResult
+			{
+				Success = false,
+				Message = ex.Message
+			};
+		}
+		try
+		{
 			DashboardBackup backup = importedData.Backup;
 			GameLibrary currentLibrary = await _libraryService.LoadAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 			Profile currentProfile = await _profileService.LoadAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
@@ -83,29 +103,30 @@ public sealed class ImportExportService : IImportExportService
 				SafetyBackupPath = safetyBackupPath
 			};
 		}
-		catch (JsonException)
+		catch (JsonException ex2)
 		{
+			App.LogException(ex2, "ImportExportService.ImportAsync");
 			return new DashboardImportResult
 			{
 				Success = false,
-				Message = "The selected backup file is not valid JSON."
+				Message = "Import failed while reading existing dashboard data: " + ex2.Message
 			};
 		}
-		catch (InvalidDataException ex2)
+		catch (InvalidDataException ex3)
 		{
 			return new DashboardImportResult
 			{
 				Success = false,
-				Message = ex2.Message
+				Message = ex3.Message
 			};
 		}
-		catch (Exception ex3)
+		catch (Exception ex4)
 		{
-			App.LogException(ex3, "ImportExportService.ImportAsync");
+			App.LogException(ex4, "ImportExportService.ImportAsync");
 			return new DashboardImportResult
 			{
 				Success = false,
-				Message = "Import failed: " + ex3.Message
+				Message = "Import failed: " + ex4.Message
 			};
 		}
 	}
