@@ -17,7 +17,9 @@ public sealed class ImportExportService : IImportExportService
 	private static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions
 	{
 		WriteIndented = true,
-		PropertyNameCaseInsensitive = true
+		PropertyNameCaseInsensitive = true,
+		AllowTrailingCommas = true,
+		ReadCommentHandling = JsonCommentHandling.Skip
 	};
 
 	private readonly IGameLibraryService _libraryService;
@@ -58,15 +60,19 @@ public sealed class ImportExportService : IImportExportService
 		_ = 10;
 		try
 		{
-			DashboardBackup backup = await ReadAndValidateBackupAsync(filePath, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+			ImportedDashboardData importedData = await ReadAndValidateBackupAsync(filePath, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+			DashboardBackup backup = importedData.Backup;
 			GameLibrary currentLibrary = await _libraryService.LoadAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 			Profile currentProfile = await _profileService.LoadAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 			AppSettings currentSettings = await _settingsService.LoadAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 			string safetyBackupPath = await CreateSafetyBackupAsync(currentLibrary, currentProfile, currentSettings, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
-			AppSettings updatedSettings = await MergeSettingsAsync(currentSettings, backup.Settings, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
-			Profile updatedProfile = await MergeProfileAsync(currentProfile, backup.Profile, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
-			GameLibrary updatedLibrary = NormalizeLibrary(backup.Library);
-			await RestoreThemesAsync(backup.CustomThemes, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+			AppSettings updatedSettings = importedData.IncludesSettings ? await MergeSettingsAsync(currentSettings, backup.Settings, cancellationToken).ConfigureAwait(continueOnCapturedContext: false) : currentSettings;
+			Profile updatedProfile = importedData.IncludesProfile ? await MergeProfileAsync(currentProfile, backup.Profile, cancellationToken).ConfigureAwait(continueOnCapturedContext: false) : currentProfile;
+			GameLibrary updatedLibrary = importedData.IncludesLibrary ? NormalizeLibrary(backup.Library) : currentLibrary;
+			if (importedData.IncludesThemes)
+			{
+				await RestoreThemesAsync(backup.CustomThemes, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+			}
 			await _settingsService.SaveAsync(updatedSettings, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 			await _profileService.SaveAsync(updatedProfile, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 			await _libraryService.SaveAsync(updatedLibrary, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
@@ -542,40 +548,101 @@ public sealed class ImportExportService : IImportExportService
 		await JsonSerializer.SerializeAsync(stream, backup, SerializerOptions, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 	}
 
-	private static async Task<DashboardBackup> ReadAndValidateBackupAsync(string filePath, CancellationToken cancellationToken)
+	private static async Task<ImportedDashboardData> ReadAndValidateBackupAsync(string filePath, CancellationToken cancellationToken)
 	{
 		if (!File.Exists(filePath))
 		{
 			throw new InvalidDataException("The selected backup file could not be found.");
 		}
-		DashboardBackup result;
-		await using (FileStream stream = File.OpenRead(filePath))
+		await using FileStream stream = File.OpenRead(filePath);
+		using JsonDocument document = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions
 		{
-			DashboardBackup dashboardBackup = await JsonSerializer.DeserializeAsync<DashboardBackup>(stream, SerializerOptions, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
-			if (dashboardBackup == null)
-			{
-				throw new InvalidDataException("The selected backup file is empty or unreadable.");
-			}
-			DashboardBackup dashboardBackup2 = dashboardBackup;
-			if (dashboardBackup2.Settings == null)
-			{
-				dashboardBackup2.Settings = new DashboardBackupSettings();
-			}
-			dashboardBackup2 = dashboardBackup;
-			if (dashboardBackup2.Profile == null)
-			{
-				dashboardBackup2.Profile = new DashboardBackupProfile();
-			}
-			dashboardBackup.Library = NormalizeLibrary(dashboardBackup.Library);
-			dashboardBackup2 = dashboardBackup;
-			if (dashboardBackup2.CustomThemes == null)
-			{
-				dashboardBackup2.CustomThemes = new List<DashboardBackupTheme>();
-			}
-			result = dashboardBackup;
+			AllowTrailingCommas = true,
+			CommentHandling = JsonCommentHandling.Skip
+		}, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+		JsonElement root = document.RootElement;
+		if (root.ValueKind == JsonValueKind.Object && IsFullBackupJson(root))
+		{
+			DashboardBackup dashboardBackup = root.Deserialize<DashboardBackup>(SerializerOptions) ?? throw new InvalidDataException("The selected backup file is empty or unreadable.");
+			return NormalizeImportedBackup(dashboardBackup, includesSettings: true, includesProfile: true, includesLibrary: true, includesThemes: true);
 		}
-		return result;
+		if (root.ValueKind == JsonValueKind.Object && IsSettingsJson(root))
+		{
+			AppSettings settings = root.Deserialize<AppSettings>(SerializerOptions) ?? throw new InvalidDataException("The selected settings file is empty or unreadable.");
+			return NormalizeImportedBackup(new DashboardBackup
+			{
+				Settings = await BuildSettingsBackupAsync(settings, cancellationToken).ConfigureAwait(continueOnCapturedContext: false)
+			}, includesSettings: true, includesProfile: false, includesLibrary: false, includesThemes: false);
+		}
+		if (root.ValueKind == JsonValueKind.Object && IsProfileJson(root))
+		{
+			Profile profile = root.Deserialize<Profile>(SerializerOptions) ?? throw new InvalidDataException("The selected profile file is empty or unreadable.");
+			return NormalizeImportedBackup(new DashboardBackup
+			{
+				Profile = await BuildProfileBackupAsync(profile, cancellationToken).ConfigureAwait(continueOnCapturedContext: false)
+			}, includesSettings: false, includesProfile: true, includesLibrary: false, includesThemes: false);
+		}
+		if (root.ValueKind == JsonValueKind.Object && IsLibraryJson(root))
+		{
+			GameLibrary library = root.Deserialize<GameLibrary>(SerializerOptions) ?? throw new InvalidDataException("The selected library file is empty or unreadable.");
+			return NormalizeImportedBackup(new DashboardBackup
+			{
+				Library = library
+			}, includesSettings: false, includesProfile: false, includesLibrary: true, includesThemes: false);
+		}
+		if (root.ValueKind == JsonValueKind.Array)
+		{
+			List<GameMetadata> games = root.Deserialize<List<GameMetadata>>(SerializerOptions) ?? new List<GameMetadata>();
+			return NormalizeImportedBackup(new DashboardBackup
+			{
+				Library = new GameLibrary
+				{
+					Games = games
+				}
+			}, includesSettings: false, includesProfile: false, includesLibrary: true, includesThemes: false);
+		}
+		throw new InvalidDataException("The selected JSON file is not a DashX360 backup, settings, profile, or library file.");
 	}
+
+	private static ImportedDashboardData NormalizeImportedBackup(DashboardBackup dashboardBackup, bool includesSettings, bool includesProfile, bool includesLibrary, bool includesThemes)
+	{
+		if (dashboardBackup.Settings == null)
+		{
+			dashboardBackup.Settings = new DashboardBackupSettings();
+		}
+		if (dashboardBackup.Profile == null)
+		{
+			dashboardBackup.Profile = new DashboardBackupProfile();
+		}
+		dashboardBackup.Library = NormalizeLibrary(dashboardBackup.Library);
+		if (dashboardBackup.CustomThemes == null)
+		{
+			dashboardBackup.CustomThemes = new List<DashboardBackupTheme>();
+		}
+		return new ImportedDashboardData(dashboardBackup, includesSettings, includesProfile, includesLibrary, includesThemes);
+	}
+
+	private static bool IsFullBackupJson(JsonElement root)
+	{
+		return root.TryGetProperty("ExportVersion", out _) || root.TryGetProperty("Settings", out _) || root.TryGetProperty("Profile", out _) || root.TryGetProperty("Library", out _) || root.TryGetProperty("CustomThemes", out _);
+	}
+
+	private static bool IsSettingsJson(JsonElement root)
+	{
+		return root.TryGetProperty("DashboardTileCustomizations", out _) || root.TryGetProperty("DashboardTileColor", out _) || root.TryGetProperty("ThemeName", out _) || root.TryGetProperty("StartFullscreen", out _);
+	}
+
+	private static bool IsProfileJson(JsonElement root)
+	{
+		return root.TryGetProperty("Gamertag", out _) || root.TryGetProperty("GamerPicturePath", out _) || root.TryGetProperty("Gamerscore", out _);
+	}
+
+	private static bool IsLibraryJson(JsonElement root)
+	{
+		return root.TryGetProperty("Games", out _) || root.TryGetProperty("LibraryPaths", out _);
+	}
+
+	private sealed record ImportedDashboardData(DashboardBackup Backup, bool IncludesSettings, bool IncludesProfile, bool IncludesLibrary, bool IncludesThemes);
 
 	private static string MakeSafeFileName(string value)
 	{
