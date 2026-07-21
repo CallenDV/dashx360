@@ -16,6 +16,7 @@
       <converters:DashboardTileImageBrushConverter x:Key="DashboardTileImageBrushConverter" />
       <converters:DashboardTilePreviewImageSourceConverter x:Key="DashboardTilePreviewImageSourceConverter" />
       <converters:DashboardTileTitleConverter x:Key="DashboardTileTitleConverter" />
+      <converters:DashboardTileSecondaryTitleConverter x:Key="DashboardTileSecondaryTitleConverter" />
       <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
       <converters:EmptyToVisibilityConverter x:Key="EmptyToVisibilityConverter" />
       <DataTemplate x:Key="{DataTemplateKey {x:Type tabs:BingTabViewModel}}" DataType="{x:Type tabs:BingTabViewModel}">

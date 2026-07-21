@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>XboxMetroLauncher</AssemblyName>
+    <AssemblyName>DashX360</AssemblyName>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>false</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -20,13 +20,14 @@
     <Platforms>x64</Platforms>
     <DebugType Condition="'$(Configuration)' == 'Release'">embedded</DebugType>
     <DebugSymbols Condition="'$(Configuration)' == 'Release'">false</DebugSymbols>
-    <DefaultItemExcludes>$(DefaultItemExcludes);Build\**;bin\**;obj\**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Build\**;bin\**;obj\**;UserData\**;Logs\**</DefaultItemExcludes>
     <ApplicationIcon>Assets\Misc\256x256.ico</ApplicationIcon>
     <RootNamespace />
-    <Version>1.2.1</Version>
-    <InformationalVersion>v1.2.1-public</InformationalVersion>
-    <AssemblyVersion>1.2.1.0</AssemblyVersion>
-    <FileVersion>1.2.1.0</FileVersion>
+    <Product>DashX360</Product>
+    <Version>1.2.2</Version>
+    <InformationalVersion>v1.2.2-public</InformationalVersion>
+    <AssemblyVersion>1.2.2.0</AssemblyVersion>
+    <FileVersion>1.2.2.0</FileVersion>
     <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
 
@@ -38,10 +39,10 @@
   <ItemGroup>
     <ApplicationDefinition Include="XboxMetroLauncher\App.xaml" />
     <Page Include="XboxMetroLauncher\MainWindow.xaml" />
-    <Page Include="XboxMetroLauncher\Controls\*.xaml" />
-    <Page Include="XboxMetroLauncher\Themes\*.xaml" />
-    <Page Include="XboxMetroLauncher\Views\*.xaml" />
-    <Page Include="XboxMetroLauncher\Views\Tabs\*.xaml" />
+    <Page Include="controls\*.xaml" />
+    <Page Include="themes\*.xaml" />
+    <Page Include="views\*.xaml" />
+    <Page Include="views\tabs\*.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -64,6 +65,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3124.44" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="SharpDX.DirectInput" Version="4.2.0" />
   </ItemGroup>
