@@ -3626,88 +3626,7 @@ public partial class MainWindow : Window
 			{
 				num = 0;
 			}
-			int num2 = num;
-			switch (num)
-			{
-			case 0:
-				num2 = action switch
-				{
-					DashboardInputAction.MoveRight => 1, 
-					DashboardInputAction.MoveDown => 5, 
-					_ => num, 
-				};
-				break;
-			case 1:
-				num2 = action switch
-				{
-					DashboardInputAction.MoveLeft => 0, 
-					DashboardInputAction.MoveRight => 2, 
-					DashboardInputAction.MoveDown => 6, 
-					_ => num, 
-				};
-				break;
-			case 2:
-				num2 = action switch
-				{
-					DashboardInputAction.MoveLeft => 1, 
-					DashboardInputAction.MoveRight => 3, 
-					DashboardInputAction.MoveDown => 7, 
-					_ => num, 
-				};
-				break;
-			case 3:
-				num2 = action switch
-				{
-					DashboardInputAction.MoveLeft => 2, 
-					DashboardInputAction.MoveRight => 4, 
-					DashboardInputAction.MoveDown => 8, 
-					_ => num, 
-				};
-				break;
-			case 4:
-				num2 = action switch
-				{
-					DashboardInputAction.MoveLeft => 3, 
-					DashboardInputAction.MoveDown => 8, 
-					_ => num, 
-				};
-				break;
-			case 5:
-				num2 = action switch
-				{
-					DashboardInputAction.MoveUp => 0, 
-					DashboardInputAction.MoveRight => 6, 
-					_ => num, 
-				};
-				break;
-			case 6:
-				num2 = action switch
-				{
-					DashboardInputAction.MoveLeft => 5, 
-					DashboardInputAction.MoveRight => 7, 
-					DashboardInputAction.MoveUp => 1, 
-					_ => num, 
-				};
-				break;
-			case 7:
-				num2 = action switch
-				{
-					DashboardInputAction.MoveLeft => 6, 
-					DashboardInputAction.MoveRight => 8, 
-					DashboardInputAction.MoveUp => 2, 
-					_ => num, 
-				};
-				break;
-			case 8:
-				num2 = action switch
-				{
-					DashboardInputAction.MoveLeft => 7, 
-					DashboardInputAction.MoveUp => 3, 
-					_ => num, 
-				};
-				break;
-			}
-			num2 = Math.Clamp(num2, 0, list.Count - 1);
+			int num2 = FindNearestAppLibraryTileIndex(list, num, action);
 			AppLibraryTileViewModel appLibraryTileViewModel2 = list[num2];
 			if (_viewModel.SelectedAppLibraryTile != appLibraryTileViewModel2)
 			{
@@ -3718,6 +3637,52 @@ public partial class MainWindow : Window
 				FocusAppLibraryTileButton(appLibraryTileViewModel2);
 			}, (DispatcherPriority)7, Array.Empty<object>());
 			return true;
+		}
+
+		private static int FindNearestAppLibraryTileIndex(IReadOnlyList<AppLibraryTileViewModel> tiles, int currentIndex, DashboardInputAction action)
+		{
+			if (currentIndex < 0 || currentIndex >= tiles.Count)
+			{
+				return 0;
+			}
+			AppLibraryTileViewModel current = tiles[currentIndex];
+			double currentCenterX = current.Left + current.Width / 2.0;
+			double currentCenterY = current.Top + current.Height / 2.0;
+			int bestIndex = currentIndex;
+			double bestScore = double.MaxValue;
+			for (int i = 0; i < tiles.Count; i++)
+			{
+				if (i == currentIndex)
+				{
+					continue;
+				}
+				AppLibraryTileViewModel candidate = tiles[i];
+				double candidateCenterX = candidate.Left + candidate.Width / 2.0;
+				double candidateCenterY = candidate.Top + candidate.Height / 2.0;
+				double deltaX = candidateCenterX - currentCenterX;
+				double deltaY = candidateCenterY - currentCenterY;
+				bool isCandidate = action switch
+				{
+					DashboardInputAction.MoveLeft => deltaX < -1.0,
+					DashboardInputAction.MoveRight => deltaX > 1.0,
+					DashboardInputAction.MoveUp => deltaY < -1.0,
+					DashboardInputAction.MoveDown => deltaY > 1.0,
+					_ => false,
+				};
+				if (!isCandidate)
+				{
+					continue;
+				}
+				double primaryDistance = action == DashboardInputAction.MoveLeft || action == DashboardInputAction.MoveRight ? Math.Abs(deltaX) : Math.Abs(deltaY);
+				double crossAxisDistance = action == DashboardInputAction.MoveLeft || action == DashboardInputAction.MoveRight ? Math.Abs(deltaY) : Math.Abs(deltaX);
+				double score = primaryDistance * 1000.0 + crossAxisDistance;
+				if (score < bestScore)
+				{
+					bestScore = score;
+					bestIndex = i;
+				}
+			}
+			return bestIndex;
 		}
 
 		private void AnimateMyGamesPageShift(DashboardInputAction action)
