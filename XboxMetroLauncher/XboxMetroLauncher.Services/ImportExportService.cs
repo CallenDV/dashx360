@@ -137,6 +137,8 @@ public sealed class ImportExportService : IImportExportService
 				ImagePath = keyValuePair.Value.ImagePath,
 				TitleOverride = keyValuePair.Value.TitleOverride,
 				SecondaryTitleOverride = keyValuePair.Value.SecondaryTitleOverride,
+				LaunchExecutablePath = keyValuePair.Value.LaunchExecutablePath,
+				LaunchWebAddress = keyValuePair.Value.LaunchWebAddress,
 				Zoom = keyValuePair.Value.Zoom,
 				OffsetX = keyValuePair.Value.OffsetX,
 				OffsetY = keyValuePair.Value.OffsetY
@@ -194,6 +196,8 @@ public sealed class ImportExportService : IImportExportService
 				ImagePath = (importedCustomization.Value.ImagePath ?? string.Empty),
 				TitleOverride = (importedCustomization.Value.TitleOverride ?? string.Empty),
 				SecondaryTitleOverride = (importedCustomization.Value.SecondaryTitleOverride ?? string.Empty),
+				LaunchExecutablePath = (importedCustomization.Value.LaunchExecutablePath ?? string.Empty),
+				LaunchWebAddress = (importedCustomization.Value.LaunchWebAddress ?? string.Empty),
 				Zoom = ((importedCustomization.Value.Zoom <= 0.0) ? 1.0 : importedCustomization.Value.Zoom),
 				OffsetX = importedCustomization.Value.OffsetX,
 				OffsetY = importedCustomization.Value.OffsetY
