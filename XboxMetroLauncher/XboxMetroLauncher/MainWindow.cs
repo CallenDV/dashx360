@@ -124,6 +124,8 @@ public partial class MainWindow : Window
 
 	private bool _isMouseCursorHiddenForController;
 
+	private bool _isHandlingControllerInput;
+
 	private Point? _lastMousePosition;
 
 	private GuideWindow? _guideWindow;
@@ -482,7 +484,15 @@ public partial class MainWindow : Window
 	private void HandleControllerInputAction(DashboardInputAction action)
 	{
 		HideMouseCursorForController();
-		HandleInputAction(action);
+		_isHandlingControllerInput = true;
+		try
+		{
+			HandleInputAction(action);
+		}
+		finally
+		{
+			_isHandlingControllerInput = false;
+		}
 	}
 
 	private void HandleInputAction(DashboardInputAction action)
@@ -606,6 +616,7 @@ public partial class MainWindow : Window
 			if (flag)
 			{
 				_viewModel.MoveGameDetailsTab((action != DashboardInputAction.PreviousTab) ? 1 : (-1));
+				QueueGameDetailsTileFocus();
 				return;
 			}
 			if (_viewModel.IsMyGamesOpen && ((uint)action <= 3u || (uint)(action - 12) <= 1u))
@@ -649,14 +660,19 @@ public partial class MainWindow : Window
 					if (!TryRestoreOverlayFocus())
 					{
 						flag = !TryMoveOverlayFocus(GameDetailsOverlay, action);
-						if (flag)
+						if (flag && !_isHandlingControllerInput)
 						{
 							bool flag2 = (uint)action <= 1u;
 							flag = flag2;
 						}
+						else if (_isHandlingControllerInput)
+						{
+							flag = false;
+						}
 						if (flag)
 						{
 							_viewModel.MoveGameDetailsTab((action != DashboardInputAction.MoveLeft) ? 1 : (-1));
+							QueueGameDetailsTileFocus();
 						}
 					}
 					return;
@@ -2186,7 +2202,15 @@ public partial class MainWindow : Window
 		else if (e.PropertyName == "SelectedGameDetailsTabKey")
 		{
 			AnimateGameDetailsTabChange();
-			QueueFocusFirstButton();
+			QueueGameDetailsTileFocus();
+		}
+		else if (e.PropertyName == "SelectedMusicBrowserResultItem")
+		{
+			((DispatcherObject)this).Dispatcher.BeginInvoke((Delegate)(Action)ScrollMusicBrowserResultIntoView, (DispatcherPriority)6, Array.Empty<object>());
+		}
+		else if (e.PropertyName == "CurrentMusicTrack")
+		{
+			((DispatcherObject)this).Dispatcher.BeginInvoke((Delegate)(Action)ScrollCurrentMusicTrackIntoView, (DispatcherPriority)6, Array.Empty<object>());
 		}
 	}
 
@@ -2924,6 +2948,17 @@ public partial class MainWindow : Window
 		}, (DispatcherPriority)4, Array.Empty<object>());
 	}
 
+	private void QueueGameDetailsTileFocus()
+	{
+		((DispatcherObject)this).Dispatcher.BeginInvoke((Delegate)(Action)delegate
+		{
+			if (_viewModel.IsDetailsOpen)
+			{
+				TryFocus(GetFirstVisibleDetailsButton() ?? FindFocusableControl((DependencyObject?)(object)GameDetailsOverviewPanel) ?? FindFocusableControl((DependencyObject?)(object)GameDetailsOverlay));
+			}
+		}, (DispatcherPriority)6, Array.Empty<object>());
+	}
+
 	private void FocusFirstButton()
 	{
 		if (_viewModel.IsDetailsOpen)
@@ -3265,6 +3300,38 @@ public partial class MainWindow : Window
 		}
 		FocusFirstButton();
 		return true;
+	}
+
+	private void ScrollMusicBrowserResultIntoView()
+	{
+		int selectedIndex = _viewModel.MusicBrowserResultItems.IndexOf(_viewModel.SelectedMusicBrowserResultItem);
+		ScrollItemIntoView(MusicBrowserResultsScrollViewer, selectedIndex, 48.0);
+	}
+
+	private void ScrollCurrentMusicTrackIntoView()
+	{
+		int selectedIndex = _viewModel.MusicTracks.IndexOf(_viewModel.CurrentMusicTrack);
+		ScrollItemIntoView(MusicPlayerTracksScrollViewer, selectedIndex, 48.0);
+	}
+
+	private static void ScrollItemIntoView(ScrollViewer scrollViewer, int selectedIndex, double itemHeight)
+	{
+		if (selectedIndex < 0 || itemHeight <= 0.0)
+		{
+			return;
+		}
+		double itemTop = selectedIndex * itemHeight;
+		double itemBottom = itemTop + itemHeight;
+		double viewportTop = scrollViewer.VerticalOffset;
+		double viewportBottom = viewportTop + scrollViewer.ViewportHeight;
+		if (itemTop < viewportTop)
+		{
+			scrollViewer.ScrollToVerticalOffset(itemTop);
+		}
+		else if (itemBottom > viewportBottom)
+		{
+			scrollViewer.ScrollToVerticalOffset(itemBottom - scrollViewer.ViewportHeight);
+		}
 	}
 
 	private DependencyObject? GetActiveOverlay()

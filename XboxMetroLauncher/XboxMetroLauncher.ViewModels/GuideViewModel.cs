@@ -2078,7 +2078,9 @@ public sealed class GuideViewModel : ObservableObject, IDisposable
 		try
 		{
 			await Task.Delay(360).ConfigureAwait(continueOnCapturedContext: true);
-			OpenMusicSourcesFromGuide();
+			OpenMusicSourcesFromGuide(playLoadSound: false);
+			await Task.Delay(120).ConfigureAwait(continueOnCapturedContext: true);
+			_audioService.Play("guide-music-sources-load");
 		}
 		finally
 		{
@@ -2086,14 +2088,17 @@ public sealed class GuideViewModel : ObservableObject, IDisposable
 		}
 	}
 
-	private void OpenMusicSourcesFromGuide()
+	private void OpenMusicSourcesFromGuide(bool playLoadSound = true)
 	{
 		PrepareGuideReturnToDashboard();
 		CloseGuide();
 		if (_dashboard.OpenMusicPlayerFromGuideCommand.CanExecute(null))
 		{
 			_dashboard.OpenMusicPlayerFromGuideCommand.Execute(null);
-			_audioService.Play("guide-music-sources-load");
+			if (playLoadSound)
+			{
+				_audioService.Play("guide-music-sources-load");
+			}
 		}
 		RestoreMainWindow();
 	}

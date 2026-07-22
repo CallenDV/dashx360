@@ -270,7 +270,7 @@
             </StackPanel>
           </Grid>
         </Grid>
-        <Grid Name="GameDetailsOverlay" ZIndex="70" FocusManager.IsFocusScope="True" KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Cycle" Visibility="{Binding IsDetailsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Grid Name="GameDetailsOverlay" ZIndex="70" FocusManager.IsFocusScope="True" KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Cycle" FocusVisualStyle="{x:Null}" Visibility="{Binding IsDetailsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
           <FrameworkElement.Resources>
             <ResourceDictionary>
               <Style x:Key="GameDetailsTileButtonStyle" TargetType="{x:Type Button}">
@@ -380,7 +380,7 @@
               </LinearGradientBrush>
             </Shape.Fill>
           </Rectangle>
-          <ItemsControl Name="GameDetailsTabsChrome" Margin="152,122,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" ItemsSource="{Binding GameDetailsTabs}" Visibility="{Binding IsGameDetailsSeeAllOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+          <ItemsControl Name="GameDetailsTabsChrome" Margin="152,122,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Focusable="False" KeyboardNavigation.IsTabStop="False" KeyboardNavigation.TabNavigation="None" FocusVisualStyle="{x:Null}" ItemsSource="{Binding GameDetailsTabs}" Visibility="{Binding IsGameDetailsSeeAllOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
             <UIElement.RenderTransform>
               <TranslateTransform x:Name="GameDetailsTabsChromeTranslate" X="0" />
             </UIElement.RenderTransform>
@@ -1611,7 +1611,7 @@
                     <TextBlock Text="{Binding MusicBrowserSourceFolderPath}" Foreground="#C8FFFFFF" FontSize="13" Margin="0,6,0,0" HorizontalAlignment="Center" />
                   </StackPanel>
                 </Button>
-                <ScrollViewer Focusable="False" KeyboardNavigation.TabNavigation="None" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" Margin="18,24,18,58" Visibility="{Binding HasMusicBrowserResults, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ScrollViewer Name="MusicBrowserResultsScrollViewer" Focusable="False" KeyboardNavigation.TabNavigation="None" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" Margin="18,24,18,58" Visibility="{Binding HasMusicBrowserResults, Converter={StaticResource BooleanToVisibilityConverter}}">
                   <ItemsControl Focusable="False" KeyboardNavigation.TabNavigation="None" ItemsSource="{Binding MusicBrowserResultItems}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate>
@@ -1695,7 +1695,7 @@
               <UIElement.RenderTransform>
                 <TranslateTransform x:Name="MusicPlayerTrackPaneTranslate" X="0" />
               </UIElement.RenderTransform>
-              <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+              <ScrollViewer Name="MusicPlayerTracksScrollViewer" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding MusicTracks}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
