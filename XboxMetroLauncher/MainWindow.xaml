@@ -1699,8 +1699,18 @@
                 <ItemsControl ItemsSource="{Binding MusicTracks}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                      <Button Height="48" Style="{StaticResource MusicTrackButtonStyle}" Command="{Binding DataContext.PlaySelectedMusicCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
-                        <Grid Background="#21FFFFFF">
+                      <Button Height="48" Focusable="False" Style="{StaticResource MusicTrackButtonStyle}" Command="{Binding DataContext.PlaySelectedMusicCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
+                        <Grid>
+                          <Grid.Style>
+                            <Style TargetType="{x:Type Grid}">
+                              <Setter Property="Background" Value="#21FFFFFF" />
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                  <Setter Property="Background" Value="#A8FFFFFF" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Grid.Style>
                           <TextBlock Foreground="#FF5F6669" FontSize="21" Margin="30,0,24,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Title}" />
                           <TextBlock Text="playing" Foreground="{DynamicResource MetroGreenBrush}" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,18,0">
                             <FrameworkElement.Style>

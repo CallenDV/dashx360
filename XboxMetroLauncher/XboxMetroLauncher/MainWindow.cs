@@ -593,6 +593,18 @@ public partial class MainWindow : Window
 				SkipBootIntro();
 				return;
 			}
+			if (_viewModel.IsMusicNowPlayingScreen && IsFocusInside((DependencyObject)(object)MusicPlayerLeftPane) && ((uint)action <= 3u || action == DashboardInputAction.Activate))
+			{
+				if ((uint)action <= 3u)
+				{
+					TryMoveOverlayFocus(MusicPlayerOverlay, action);
+					return;
+				}
+				if (DashboardInputRouter.ActivateFocusedElement())
+				{
+					return;
+				}
+			}
 			if (_viewModel.HandleMusicBrowserInput(action))
 			{
 				return;
@@ -617,6 +629,14 @@ public partial class MainWindow : Window
 			{
 				_viewModel.MoveGameDetailsTab((action != DashboardInputAction.PreviousTab) ? 1 : (-1));
 				QueueGameDetailsTileFocus();
+				return;
+			}
+			if (_viewModel.IsDetailsOpen && (uint)action <= 3u)
+			{
+				if (!TryMoveOverlayFocus(GameDetailsOverlay, action))
+				{
+					QueueGameDetailsTileFocus();
+				}
 				return;
 			}
 			if (_viewModel.IsMyGamesOpen && ((uint)action <= 3u || (uint)(action - 12) <= 1u))
@@ -655,28 +675,6 @@ public partial class MainWindow : Window
 			}
 			if ((uint)action <= 3u)
 			{
-				if (_viewModel.IsDetailsOpen)
-				{
-					if (!TryRestoreOverlayFocus())
-					{
-						flag = !TryMoveOverlayFocus(GameDetailsOverlay, action);
-						if (flag && !_isHandlingControllerInput)
-						{
-							bool flag2 = (uint)action <= 1u;
-							flag = flag2;
-						}
-						else if (_isHandlingControllerInput)
-						{
-							flag = false;
-						}
-						if (flag)
-						{
-							_viewModel.MoveGameDetailsTab((action != DashboardInputAction.MoveLeft) ? 1 : (-1));
-							QueueGameDetailsTileFocus();
-						}
-					}
-					return;
-				}
 				if (TryRestoreOverlayFocus())
 				{
 					_viewModel.HandleInput(action);
@@ -2212,6 +2210,10 @@ public partial class MainWindow : Window
 		{
 			((DispatcherObject)this).Dispatcher.BeginInvoke((Delegate)(Action)ScrollCurrentMusicTrackIntoView, (DispatcherPriority)6, Array.Empty<object>());
 		}
+		else if (e.PropertyName == "SelectedMusicTrack")
+		{
+			((DispatcherObject)this).Dispatcher.BeginInvoke((Delegate)(Action)ScrollCurrentMusicTrackIntoView, (DispatcherPriority)6, Array.Empty<object>());
+		}
 	}
 
 	private void UpdateThemeBackgroundVisual(bool animate = true)
@@ -3310,7 +3312,7 @@ public partial class MainWindow : Window
 
 	private void ScrollCurrentMusicTrackIntoView()
 	{
-		int selectedIndex = _viewModel.MusicTracks.IndexOf(_viewModel.CurrentMusicTrack);
+		int selectedIndex = _viewModel.MusicTracks.IndexOf(_viewModel.SelectedMusicTrack ?? _viewModel.CurrentMusicTrack);
 		ScrollItemIntoView(MusicPlayerTracksScrollViewer, selectedIndex, 48.0);
 	}
 
@@ -3844,12 +3846,16 @@ public partial class MainWindow : Window
 			e.Handled = true;
 		}
 
-		private void FocusLibraryGameButton(GameCardViewModel? game, int remainingRetries = 2, int requestId = 0)
+	private void FocusLibraryGameButton(GameCardViewModel? game, int remainingRetries = 2, int requestId = 0)
+	{
+		if (_viewModel.IsDetailsOpen)
 		{
-			if (game == null)
-			{
-				return;
-			}
+			return;
+		}
+		if (game == null)
+		{
+			return;
+		}
 			if (requestId == 0)
 			{
 				requestId = ++_libraryFocusRequestId;
@@ -4073,7 +4079,7 @@ public partial class MainWindow : Window
 				{
 					frameworkElement.BringIntoView();
 				}
-				if (num && element is System.Windows.Controls.Button { CommandParameter: GameCardViewModel commandParameter })
+				if (num && !_viewModel.IsDetailsOpen && element is System.Windows.Controls.Button { CommandParameter: GameCardViewModel commandParameter })
 				{
 					_viewModel.SelectGame(commandParameter);
 				}

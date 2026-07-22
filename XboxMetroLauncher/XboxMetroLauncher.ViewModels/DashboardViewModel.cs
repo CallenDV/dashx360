@@ -204,6 +204,8 @@ public sealed class DashboardViewModel : ObservableObject
 
 	private int _musicIndex = -1;
 
+	private MusicTrackViewModel? _selectedMusicTrack;
+
 	private string _musicBrowserScreen = "Source";
 
 	private MusicBrowserMenuItemViewModel? _selectedMusicBrowserMenuItem;
@@ -1441,7 +1443,7 @@ public sealed class DashboardViewModel : ObservableObject
 
 	public bool IsMusicSpotifyBrowser => string.Equals(_musicBrowserScreen, "Spotify", StringComparison.OrdinalIgnoreCase);
 
-	public bool IsMusicFolderLinkVisible => IsMusicSourceBrowser || IsMusicHardDriveBrowser;
+	public bool IsMusicFolderLinkVisible => IsMusicSourceBrowser || (IsMusicHardDriveBrowser && MusicBrowserResultItems.Count == 0);
 
 	public bool IsMusicBrowserResultsFocused
 	{
@@ -1862,6 +1864,29 @@ public sealed class DashboardViewModel : ObservableObject
 		}
 	}
 
+	public MusicTrackViewModel? SelectedMusicTrack
+	{
+		get
+		{
+			return _selectedMusicTrack;
+		}
+		set
+		{
+			if (!SetProperty(ref _selectedMusicTrack, value, "SelectedMusicTrack"))
+			{
+				return;
+			}
+			foreach (MusicTrackViewModel musicTrack in MusicTracks)
+			{
+				musicTrack.IsSelected = musicTrack == value;
+			}
+			OnPropertyChanged("SelectedMusicTrackIndex");
+			OnPropertyChanged("MusicTrackCountText");
+		}
+	}
+
+	public int SelectedMusicTrackIndex => MusicTracks.IndexOf(SelectedMusicTrack);
+
 	public string CurrentMusicTitle => CurrentMusicTrack?.Title ?? "No music found";
 
 	public string MusicTrackCountText
@@ -1874,7 +1899,9 @@ public sealed class DashboardViewModel : ObservableObject
 			}
 			if (MusicTracks.Count != 0)
 			{
-				return $"{Math.Max(1, _musicIndex + 1)} of {MusicTracks.Count}";
+				int selectedIndex = MusicTracks.IndexOf(SelectedMusicTrack);
+				int displayIndex = selectedIndex >= 0 ? selectedIndex : _musicIndex;
+				return $"{Math.Max(1, displayIndex + 1)} of {MusicTracks.Count}";
 			}
 			return "0 of 0";
 		}
@@ -3468,6 +3495,7 @@ public sealed class DashboardViewModel : ObservableObject
 		}
 		OnPropertyChanged("MusicBrowserResultCountText");
 		OnPropertyChanged("HasMusicBrowserResults");
+		OnPropertyChanged("IsMusicFolderLinkVisible");
 	}
 
 	private void AddSpotifyBrowserResults(string key)
@@ -3541,6 +3569,7 @@ public sealed class DashboardViewModel : ObservableObject
 		MusicTracks.Add(new MusicTrackViewModel("Spotify", "spotify-control://now-playing"));
 		_musicIndex = 0;
 		CurrentMusicTrack = MusicTracks[0];
+		SelectedMusicTrack = CurrentMusicTrack;
 		MusicPositionText = "0:00";
 		MusicDurationText = "0:00";
 		MusicProgress = 0.0;
@@ -3690,9 +3719,13 @@ public sealed class DashboardViewModel : ObservableObject
 
 	public bool HandleMusicBrowserInput(DashboardInputAction action)
 	{
-		if (!IsMusicPlayerOpen || IsMusicNowPlayingScreen || IsMusicVisualizerFullscreen)
+		if (!IsMusicPlayerOpen || IsMusicVisualizerFullscreen)
 		{
 			return false;
+		}
+		if (IsMusicNowPlayingScreen)
+		{
+			return HandleMusicNowPlayingInput(action);
 		}
 		if (action == DashboardInputAction.MoveUp || action == DashboardInputAction.MoveDown)
 		{
@@ -3746,6 +3779,43 @@ public sealed class DashboardViewModel : ObservableObject
 			return true;
 		}
 		return false;
+	}
+
+	private bool HandleMusicNowPlayingInput(DashboardInputAction action)
+	{
+		if (action == DashboardInputAction.MoveUp || action == DashboardInputAction.MoveDown)
+		{
+			MoveSelectedMusicTrack(action == DashboardInputAction.MoveDown ? 1 : -1);
+			_audioService.Play("hover");
+			return true;
+		}
+		if (action == DashboardInputAction.Activate)
+		{
+			PlayMusicTrack(SelectedMusicTrack ?? CurrentMusicTrack ?? MusicTracks.FirstOrDefault());
+			_audioService.Play("select");
+			return true;
+		}
+		if (action == DashboardInputAction.MoveLeft || action == DashboardInputAction.MoveRight)
+		{
+			return false;
+		}
+		return false;
+	}
+
+	private void MoveSelectedMusicTrack(int delta)
+	{
+		if (MusicTracks.Count == 0)
+		{
+			SelectedMusicTrack = null;
+			return;
+		}
+		int currentIndex = MusicTracks.IndexOf(SelectedMusicTrack);
+		if (currentIndex < 0)
+		{
+			currentIndex = Math.Max(0, MusicTracks.IndexOf(CurrentMusicTrack));
+		}
+		int nextIndex = Math.Clamp(currentIndex + delta, 0, MusicTracks.Count - 1);
+		SelectedMusicTrack = MusicTracks[nextIndex];
 	}
 
 	private void MoveMusicBrowserMenuSelection(int delta)
@@ -3824,6 +3894,7 @@ public sealed class DashboardViewModel : ObservableObject
 			MusicTracks.Add(new MusicTrackViewModel(item.Title, item.Path));
 			_musicIndex = 0;
 			CurrentMusicTrack = MusicTracks[0];
+			SelectedMusicTrack = CurrentMusicTrack;
 			MusicPositionText = "0:00";
 			MusicDurationText = "0:00";
 			MusicProgress = 0.0;
@@ -3871,6 +3942,7 @@ public sealed class DashboardViewModel : ObservableObject
 		}
 		_musicIndex = MusicTracks.Count > 0 ? 0 : -1;
 		CurrentMusicTrack = MusicTracks.ElementAtOrDefault(_musicIndex);
+		SelectedMusicTrack = CurrentMusicTrack;
 		MusicPositionText = "0:00";
 		MusicDurationText = "0:00";
 		MusicProgress = 0.0;
@@ -5554,6 +5626,7 @@ public sealed class DashboardViewModel : ObservableObject
 		}
 		_musicIndex = ((selectedPath == null) ? (-1) : MusicTracks.ToList().FindIndex((MusicTrackViewModel track) => string.Equals(track.Path, selectedPath, StringComparison.OrdinalIgnoreCase)));
 		CurrentMusicTrack = ((_musicIndex >= 0) ? MusicTracks[_musicIndex] : null);
+		SelectedMusicTrack = CurrentMusicTrack ?? MusicTracks.FirstOrDefault();
 		OnPropertyChanged("MusicTrackCountText");
 	}
 
@@ -5573,6 +5646,7 @@ public sealed class DashboardViewModel : ObservableObject
 				{
 					_musicIndex = spotifyIndex;
 					CurrentMusicTrack = track;
+					SelectedMusicTrack = track;
 					OnPropertyChanged("MusicTrackCountText");
 				}
 			}
@@ -5600,6 +5674,7 @@ public sealed class DashboardViewModel : ObservableObject
 		{
 			_musicIndex = num;
 			CurrentMusicTrack = track;
+			SelectedMusicTrack = track;
 			_musicPlayer.Open(new Uri(track.Path, UriKind.Absolute));
 			ApplyMusicPlayerVolume();
 			_musicPlayer.Play();
@@ -5723,6 +5798,7 @@ public sealed class DashboardViewModel : ObservableObject
 		int nextIndex = (currentIndex + delta + MusicTracks.Count) % MusicTracks.Count;
 		_musicIndex = nextIndex;
 		CurrentMusicTrack = MusicTracks[nextIndex];
+		SelectedMusicTrack = CurrentMusicTrack;
 		OnPropertyChanged("MusicTrackCountText");
 	}
 
