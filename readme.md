@@ -7,12 +7,26 @@ If you like my work, feel free to donate to my ko-fi! however money will never b
 Original app credit: ZivvoZ
 https://youtube.com/@zivvoz
 
-## Version 1.2.1
+## Version 1.2.2 New Features
 
-- Custom dashboard tile colors now also drive the dashboard accent boxes in Guide menus, selection bars, and settings buttons.
-- Fixed Guide/Friends icon glyph rendering so people, messages, controller, voice, and reputation icons display correctly instead of fallback boxes.
-- Fixed startup behavior for recovered public builds so the main window opens reliably.
-- Disabled the unsafe DirectInput fallback path that could crash the app on some systems; XInput controller support remains active.
+* Added Spotify media controls.
+* Added a YouTube app.
+* Added widescreen support.
+* Added dashboard volume control under Audio Settings.
+* Added more visual-only loading menus (optional)
+* Support for adding shortcuts and URLS to tiles and shortcuts in My Games/My Apps
+* Overhauled dashboard sounds, and menu animations.
+
+## Bug Fixes and Improvements
+
+* Tweaked dashboard tab positioning and alignment.
+* Refined the Music Player, Apps, Profile, and Add Friend menus.
+* Improved navigation in the Friends and Themes menus.
+* The on-screen **(B) Back** button can now be clicked with a mouse.
+* Fixed achievement information not displaying when opening a game.
+* Fixed broken keyboard navigation in the Friends and Themes menus.
+* Fixed Steam friends showing **Send Friend Request** instead of **Remove Friend**.
+* Additional bug fixes, stability improvements, and quality-of-life changes.
 
 ## Features
 
