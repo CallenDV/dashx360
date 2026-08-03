@@ -50,7 +50,7 @@ https://youtube.com/@zivvoz
 ### Requirements
 
 - Untick `Enable Guide Button Chords for controllers` to use the guide if using steam
-- Windows 10 or Windows 11
+- Windows 7+
 
 ### Working on the Project
 
